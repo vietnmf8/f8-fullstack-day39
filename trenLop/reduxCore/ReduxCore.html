@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Demo Redux</title>
+    </head>
+    <body>
+        <h1 id="output">Demo Redux</h1>
+        <button id="deposit">Deposit $10</button>
+        <button id="withdraw">Withdraw $10</button>
+
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.2.1/redux.js"
+            integrity="sha512-Olr8rkMYuxq3KpAPjYA/mAVYe7EIEP4RkhoAvD/qOrlauzE4CTvpQSg/cRX0/5Qreret4aobD0vg1xtjBqR7VA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script>
+
+        <script>
+            /* createStore(reducer, preloadedState): 
+                        - reducer: Là một hàm có tham số (state, action) => xử lý... trả ra state mới.
+                        - preloadedState (giá trị tải trước): Chính là initialState
+
+                    - Khi gọi createStore() => trả ra một store
+           */
+
+            /* Initial State */
+            const initialState = 0;
+
+            /* Reducer */
+            const reducer = (state = initialState, action) => {
+                switch (action.type) {
+                    case "deposit":
+                        return state + action.payload;
+                    case "withdraw":
+                        return state - action.payload;
+
+                    default:
+                        return state;
+                }
+            };
+            
+            const store = Redux.createStore(reducer, initialState);
+
+            /* Bên trong store có:
+                - getState(): Lấy state hiện tại/mới nhất
+                - dispatch(): Gửi action {} cho reducer
+                - subscribe(): Là một hàm, nhận tham số là một listener(listener cũng là một hàm):
+                    + Tưởng tượng khi bạn đăng ký một kênh youtube, mục đích là để nhận thông báo khi có một video mới được đăng!
+                    => Liên hệ kỹ thuật:
+                    - Lý do subscribe() ở store: Khi nào state mới được cập nhật thì nó sẽ báo cho mình biết
+                    - Nghĩa là: khi store cập nhật state, mà state thay đổi thì subscribe sẽ báo cho chúng ta biết.
+                    
+                    ? Vậy nó báo ở bước nào => nó báo ở bước từ reducer return ra state mới
+                => TÓM LẠI: BIẾT KHI NÀO STATE ĐƯỢC CẬP NHẬT
+            
+            */
+
+            console.log(store.getState());
+            /* Cách hoạt động của store.getState():
+                - Không lấy đầu vào initialState để gắn thẳng vào state ban đầu.
+                - Mà state ban đầu được sinh ra từ lần gọi reducer.
+                => Vậy lần đầu tiên là cứ gọi reducer một cái để lấy ra state đầu tiên
+
+                const reducer = (state, action) => {
+                    // Return state
+                    console.log("Lần đầu gọi reducer ở store");
+                    console.log(state, action);
+                }  
+                    
+                => Lần đầu tiên gọi hàm reducer, mà reducer không return => state ban đầu là undefined
+
+                - Bình thường khi học useReducer, reducer được gọi khi gọi dispatch
+                - Nhưng Redux mặc định lần đầu tiên cứ gọi reducer cái đã
+
+                Lúc này chúng ta thử console.log(state, action) trong reducer:
+                KẾT QUẢ: 0 | {type: '@@redux/INIT9.b.0.8.q.l'}
+                - 0: Tham số state => lấy từ chính initialState
+                - {type: '@@redux/INIT9.b.0.8.q.l'}: Đặt type kiểu này để tránh bị trùng action.type của chúng ta để không bị gọi logic trong switch case:
+
+                const reducer = (state, action) => {
+                    switch (action.type) {
+                        // case "add":
+                        // case "update":
+
+                        default:
+                            return state
+                    }
+
+                }
+
+                => Vì lần đầu không trúng case nào nên sẽ lọt vào case default, chúng ta sẽ return state, để lần đầu nó nhận state ban đầu là initialState
+            */
+
+            /* Get DOM Elements */
+            const output = document.querySelector("#output");
+            const depositBtn = document.querySelector("#deposit");
+            const withdrawBtn = document.querySelector("#withdraw");
+
+            /* Render lần đầu tiên */
+            output.innerText = store.getState();
+
+            /* Event Handle */
+            depositBtn.addEventListener("click", () => {
+                // Lấy dispatch từ store
+                store.dispatch({ type: "deposit", payload: 10 });
+            });
+
+            withdrawBtn.addEventListener("click", () => {
+                // Lấy dispatch từ store
+                store.dispatch({ type: "withdraw", payload: 10 });
+            });
+
+            /* Sau khi dispatch => reducer đã trả ra state mới:
+            - Khi state thay đổi -> sẽ báo cho listener (subscribe chỉ là hành vi theo dõi thôi):
+            - subscribe(listener): Khi sự kiện xảy ra, tôi sẽ gọi lại bạn. Nhưng để gọi lại bạn, bạn phải cho tôi một số điện thoại (một hàm):
+                - Trong lập trình:
+                + listener: chính là số điện thoại (là hàm)
+                + gọi lại: thực thi hàm (callback)
+
+                - Nếu người dùng đưa nhầm:
+                + số điện thoại → đúng → gọi được
+                + một cuốn sách → sai → không gọi được
+                + một cái ghế → sai → không gọi được
+
+                - Vậy nên ta phải kiểm tra:
+                “Cái bạn đưa tôi có phải là một thứ tôi có thể gọi được không?”
+
+                - Trong JavaScript, chỉ có Hàm (function) mới “gọi được".
+
+            TÓM LẠI:
+            - listener là thứ sẽ được gọi lại khi có thay đổi.
+            - Muốn được gọi → phải là hàm.
+            - Nếu không phải hàm → không thể gọi → hệ thống lỗi → phải kiểm tra ngay từ đầu.
+            */
+
+            /* subscribe */
+            const unsubscribe = store.subscribe(
+                /* listener */ () => {
+                    /* 
+                    - Rõ ràng khi dispatch thành công, reducer trả rả state mới, tại đây sẽ báo cho chúng ta biết state vừa được cập nhật.
+                    - Lưu ý: có thể add nhiều listener
+                    => add 3 cái listener => state cập nhật thì cả 3 thằng đều nghe thấy. => Giúp bóc tách logic
+                    */
+                    console.log("state vừa được cập nhật 1");
+                    // Cập nhật lên giao diện
+                    output.innerText = store.getState();
+
+                    /* unsubscribe:
+                        - Khi gọi subscribe() thì sẽ trả về (return) một hàm là unsubscribe
+                    */
+
+                    /* Cơ chế hoạt động của store.subscribe(listener):
+                        - Nội bộ bên trong hàm subscribe sẽ xử lý bằng cách lấy hàm listener sẽ tạm thời cất đi đâu đó. Khi state thay đổi thì nó sẽ lấy hàm listener ra và gọi lại.
+
+                        Nhưng đồng thời chính hàm subscribe() được thiết kế là nó lại return ra một hàm khác, và hàm đó gọi là hàm unsubscribe.
+
+                        - Khi gọi hàm unsubscribe() thì sẽ không lắng nghe được sự thay đổi của state nữa => sẽ không được subscribe nữa => giao diện không được cập nhật!
+
+                        TUY NHIÊN: State vẫn cập nhật bình thường, chỉ là không hiện lên giao diện vì chúng ta dừng subscribe
+
+                        Lưu Ý:
+
+                         Nếu chúng ta unsubscribe nhiều thằng, thì gọi unsubscribe1() thì chỉ unsubscribe thằng đó thôi, những thằng khác như unsubscribe2(), unsubscribe3() vẫn lắng nghe bình thường
+                    */
+                }
+            );
+
+            /* subscribe */
+            const unsubscribe2 = store.subscribe(() => {
+                // Vẫn lắng nghe bình thường vì chỉ unsubscribe1()
+                console.log("state vừa được cập nhật 2");
+            });
+
+            /* subscribe */
+            const unsubscribe3 = store.subscribe(() => {
+                // Vẫn lắng nghe bình thường vì chỉ unsubscribe2()
+                console.log("state vừa được cập nhật 3");
+            });
+        </script>
+    </body>
+</html>

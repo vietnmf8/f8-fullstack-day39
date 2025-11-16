@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Demo Redux</title>
+    </head>
+    <body>
+        <h1 id="output">Demo Redux</h1>
+        <button id="deposit">Deposit $10</button>
+        <button id="withdraw">Withdraw $10</button>
+
+        <!-- <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.2.1/redux.js"
+            integrity="sha512-Olr8rkMYuxq3KpAPjYA/mAVYe7EIEP4RkhoAvD/qOrlauzE4CTvpQSg/cRX0/5Qreret4aobD0vg1xtjBqR7VA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        ></script> -->
+
+        <!-- 
+        
+        Nhìn lại:
+            1. Redux là một object {}, trong đó có phương thức createStore()
+            2. createStore nhận vào 2 tham số chính là: reducer | preloadedState. 
+            3. Phương thức này return ra một object {}
+            4. Object này lại có 3 phương thức:
+                - getState(): Gọi reducer lần đầu tiên => Lấy ra state hiện tại được trả ra từ reducer
+                - dispatch(): Gửi action cho reducer
+                - subscribe(): Biết khi nào state được cập nhật
+        
+        -->
+
+        <!-- Tóm tắt:
+        1. createStore nhận 2 tham số là: reducer | preloadedState. Khi gọi createStore() với 2 đối số tương ứng: reducer | initialState
+        => preloadedState === initialState
+        2. Trong hàm createStore, ta có hàm reducer(state, action). gọi hàm reducer với 2 đối số tương ứng: (preloadedState, {...})
+        3. Hàm reducer() trả ra một state === preloadedState => lưu vào biến state
+        4. Tại hàm getState() chỉ cần return state => nhận state mới sau khi được reducer chạy
+        * Khi dispatch => Mục đích nhằm cập nhật biến state => Gọi reducer để cập nhật state
+        5. state = reducer(state, action); => state ở vế phải là state hiện tại/mới | state ở vế trái chính là state cũ. Vì nó phải tính toán ở vế phải trước rồi mới lưu vào vế trái. Vì vậy sau khi dispatch => gọi reducer trả ra state mới => gán đè nó vào biến state để thành state mới => lúc này có thể getState() để lấy ra state mới nhất
+
+        6.
+        -->
+
+        <script>
+            /* ==========================================================
+             * My Redux
+             * ==========================================================*/
+
+            // Bước 1: Redux là một object {} => trong đó có phương thức createStore()
+            const Redux = {
+                // Bước 2: Phương thức này nhận vào 2 tham số: reducer | preloadedState
+                createStore(reducer, preloadedState) {
+                    // Bước 4: Tạo biến state
+                    // - Vì state được gán đi gán lại, ban đầu ta có state hiện tại, sau khi dispatch tạo ra state mới và gán lại => đặt biến let state.
+                    // - State hiện tại/ban đầu này được lấy từ giá trị return khi gọi reducer lần đầu tiên
+                    // - Vì Giá trị state được return từ reducer (tức là reducer sẽ return ra state ban đầu/hiện tại) => chúng ta sẽ truyền initialState vào chính tham số state của reducer. => reducer sẽ return state cũng chính là return initialState
+                    let state = reducer(preloadedState, {
+                        type: "@@redux/INIT9.b.0.8.q.l",
+                    });
+
+                    // Bước 3: Return ra một object gồm 3 phương thức:
+                    //  - getState
+                    //  - dispatch
+                    //  - subscribe
+
+                    // Bước 5: Lưu nhiều listener dưới dạng mảng []
+                    const listeners = [];
+
+                    return {
+                        getState() {
+                            return state;
+                        },
+                        // Xử lý khi gọi dispatch
+                        dispatch(action) {
+                            // Lấy ra state mới được gán đè lại state cũ
+                            // state mới này được trả ra khi gọi reducer với tham số state cũ và action
+                            state = reducer(state, action);
+
+                            // Bước 7. Gọi hàm listener() khi state mới được cập nhật => VD: render ra giao diện
+                            // state đã thay đổi => xử lý listener
+                            listeners.forEach((listener) => listener());
+                        },
+
+                        // Phương thức này chỉ để đăng ký listener thôi!! => tức là mục tiêu là để xem có bao nhiêu thằng đang lắng nghe (listener)
+                        subscribe(listener) {
+                            // Bước 6: Thêm các listener vào mảng
+                            listeners.push(listener);
+                            // console.log(listeners);
+                            // ? Listener được gọi khi nào => được gọi khi state mới được cập nhật
+
+                            return () => {
+                                // Bước 7: return ra một hàm unsubscribe bằng cách xoá listener khỏi mảng
+                                const index = listeners.indexOf(listener);
+                                listeners.splice(index, 1);
+                            };
+                        },
+                    };
+                },
+            };
+
+            /* Initial State */
+            const initialState = 0;
+
+            /* Reducer */
+            const reducer = (state = initialState, action) => {
+                console.log(state);
+                switch (action.type) {
+                    case "deposit":
+                        return state + action.payload;
+                    case "withdraw":
+                        return state - action.payload;
+
+                    default:
+                        return state;
+                }
+            };
+            // Trong trường hợp không truyền initialState thì có thể truyền mặc định trong hàm reducer để luôn nhận state ban đầu
+            const store = Redux.createStore(reducer);
+
+            /* Get DOM Elements */
+            const output = document.querySelector("#output");
+            const depositBtn = document.querySelector("#deposit");
+            const withdrawBtn = document.querySelector("#withdraw");
+
+            /* Render lần đầu tiên */
+            output.innerText = store.getState();
+
+            /* Event Handle */
+            depositBtn.addEventListener("click", () => {
+                store.dispatch({ type: "deposit", payload: 10 });
+            });
+
+            withdrawBtn.addEventListener("click", () => {
+                store.dispatch({ type: "withdraw", payload: 10 });
+            });
+
+            /* subscribe1 */
+            const unsubscribe1 = store.subscribe(() => {
+                console.log("state vừa được cập nhật 1");
+                output.innerText = store.getState();
+            });
+
+            /* subscribe2 */
+            const unsubscribe2 = store.subscribe(() => {
+                console.log("state vừa được cập nhật 2");
+                output.innerText = store.getState();
+            });
+
+            /* subscribe3 */
+            const unsubscribe3 = store.subscribe(() => {
+                console.log("state vừa được cập nhật 3");
+                output.innerText = store.getState();
+            });
+        </script>
+    </body>
+</html>

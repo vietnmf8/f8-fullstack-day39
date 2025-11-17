@@ -61,7 +61,7 @@
             /* Cách hoạt động của store.getState():
                 - Không lấy đầu vào initialState để gắn thẳng vào state ban đầu.
                 - Mà state ban đầu được sinh ra từ lần gọi reducer.
-                => Vậy lần đầu tiên là cứ gọi reducer một cái để lấy ra state đầu tiên
+                => Vậy lần đầu tiên khi khởi tạo store = createStore là cứ gọi reducer một cái để lấy ra state đầu tiên
 
                 const reducer = (state, action) => {
                     // Return state

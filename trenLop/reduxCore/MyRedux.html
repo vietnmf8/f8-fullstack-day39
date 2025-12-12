@@ -79,10 +79,18 @@
 
                             // Bước 7. Gọi hàm listener() khi state mới được cập nhật => VD: render ra giao diện
                             // state đã thay đổi => xử lý listener
+                            /* Publish: Phát sự kiện
+                                - THÔNG BÁO ... và GỌI TẤT CẢ subscriber (người lắng nghe)
+                            */
                             listeners.forEach((listener) => listener());
                         },
 
                         // Phương thức này chỉ để đăng ký listener thôi!! => tức là mục tiêu là để xem có bao nhiêu thằng đang lắng nghe (listener)
+                        /* Đăng ký "lắng nghe" sự kiện:
+                            - Ai gọi subscribe() tức là muốn nhận thông báo
+                            - Khi có một điều kiện nào đó làm sự kiện phát ra
+                            - Báo cho các các listener để thực thi code
+                        */
                         subscribe(listener) {
                             // Bước 6: Thêm các listener vào mảng
                             listeners.push(listener);
